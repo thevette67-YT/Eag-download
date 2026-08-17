@@ -3,172 +3,132 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Downloads — Eaglercraft Resource Packs and More</title>
+  <title>Eag download</title>
   <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin: 24px; background:#f7f7fb; color:#111;}
-    h1 { margin-bottom: 8px; }
-    .note { color:#555; margin-bottom: 16px; }
-    table { border-collapse: collapse; width: 100%; background:white; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-    th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #fafafa; font-weight: 600; color:#333; }
-    tr:last-child td { border-bottom: none; }
-    button { background:#0366d6; color:white; border:0; padding:8px 12px; border-radius:6px; cursor:pointer; }
-    button.secondary { background:#6b7280; }
-    a.download-link { color:#0366d6; text-decoration:none; }
-    .small { font-size: 0.9em; color:#666; }
-    .controls { margin: 12px 0 18px; display:flex; gap:8px; align-items:center; }
-    @media (max-width:720px){ table, th, td { font-size: 14px; } .controls{flex-direction:column;align-items:flex-start;} }
+    :root { --bg:#0b1220; --card:#0f1724; --accent:#08a0ff; --text:#e6eef6; }
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#071127 0%,#071722 100%);color:var(--text)}
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:32px}
+    .card{background:var(--card);border-radius:16px;padding:40px 48px;text-align:center;box-shadow:0 8px 30px rgba(2,6,23,0.6);max-width:720px;width:100%}
+    h1{margin:0 0 12px;font-size:24px}
+    p{margin:0 0 20px;color:#9fb3cf}
+    #downloadButton{
+      display:inline-block;background:linear-gradient(90deg,var(--accent),#06b0ff);
+      border:none;color:white;padding:20px 44px;border-radius:12px;font-size:20px;font-weight:700;cursor:pointer;
+      box-shadow:0 8px 24px rgba(8,160,255,0.18);transition:transform .12s ease,box-shadow .12s ease;
+    }
+    #downloadButton:active{transform:translateY(2px)}
+    #downloadButton[disabled]{opacity:.6;cursor:default;transform:none}
+    .progress{height:12px;background:rgba(255,255,255,0.06);border-radius:999px;overflow:hidden;margin-top:18px}
+    .progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,#06b0ff,#00ffd2);transition:width .1s linear}
+    .hint{margin-top:14px;color:#7fa6cf;font-size:13px}
+    .small{font-size:13px;color:#7fa6cf;margin-top:8px}
   </style>
 </head>
 <body>
-  <h1>Resource packs & EPK downloads</h1>
-  <div class="note">
-    Files are served from this GitHub repository's raw content on the "main" branch. Use the checkboxes to select multiple files and click "Download selected". Multiple downloads may be blocked by some browsers — if that happens, use the individual Download buttons.
-  </div>
+  <div class="wrap">
+    <div class="card" role="main">
+      <h1>Eaglercraft — Resource packs and more</h1>
+      <p>Click the button below to download the repository as eag.zip</p>
+      <button id="downloadButton">Download</button>
 
-  <div class="controls">
-    <button id="selectAllBtn" class="secondary">Select all</button>
-    <button id="clearAllBtn" class="secondary">Clear</button>
-    <button id="downloadSelectedBtn">Download selected</button>
-    <div style="margin-left:auto" class="small">Hosted at: thevette67-YT/Eaglercraft-Resource-Packs-and-Skyblock (main)</div>
+      <div class="progress" aria-hidden="true" style="display:none;">
+        <i id="progressBar"></i>
+      </div>
+      <div class="hint" id="status" aria-live="polite"></div>
+      <div class="small">If automatic download is blocked by the browser, you'll be redirected to GitHub to download manually.</div>
+    </div>
   </div>
-
-  <table id="filesTable" aria-label="Downloadable files">
-    <thead>
-      <tr>
-        <th style="width:42px"></th>
-        <th>Filename</th>
-        <th style="width:130px">Size</th>
-        <th style="width:150px">Action</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
 
   <script>
-    // Base URL for raw files (branch: main)
-    const RAW_BASE = 'https://raw.githubusercontent.com/thevette67-YT/Eaglercraft-Resource-Packs-and-Skyblock/main/';
+    (function(){
+      const owner = 'thevette67-YT';
+      const repo = 'Eaglercraft-Resource-Packs-and-More';
+      const ref = 'main'; // default branch found in repo metadata
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/zipball/${ref}`;
+      const fallbackUrl = `https://github.com/${owner}/${repo}/archive/refs/heads/${ref}.zip`;
 
-    // Files discovered in the repository root (name/path and size in bytes).
-    // If you add/remove files in the repo, update this array or host this page in the repo and regenerate it.
-    const files = [
-      {"path":"!                 §5tóxica §816x.zip","name":"!                 §5tóxica §816x.zip","size":17818384},
-      {"path":"!         §b§lBombies §8[§f180k§8].zip","name":"!         §b§lBombies §8[§f180k§8].zip","size":13131048},
-      {"path":"!       Lunar [§816x§f].zip","name":"!       Lunar [§816x§f].zip","size":25254813},
-      {"path":"!      §bnebu§3l§ba §8[§f16§5x§8].zip","name":"!      §bnebu§3l§ba §8[§f16§5x§8].zip","size":13850503},
-      {"path":"!      §bnebu§3l§ba §8[§f32§5x§8].zip","name":"!      §bnebu§3l§ba §8[§f32§5x§8].zip","size":20989759},
-      {"path":"!     §bfat cat §f[§b16§7x§f].zip","name":"!     §bfat cat §f[§b16§7x§f].zip","size":16768018},
-      {"path":"!  §bxlexxd v3 §8[§f16x§8].zip","name":"!  §bxlexxd v3 §8[§f16x§8].zip","size":9109846},
-      {"path":"! §9Blue §7Revamp §8§f128x§8.zip","name":"! §9Blue §7Revamp §8§f128x§8.zip","size":20833948},
-      {"path":"! §bDynamic §7Duo §8Revamp §8[§732x§8].zip","name":"! §bDynamic §7Duo §8Revamp §8[§732x§8].zip","size":15337684},
-      {"path":"Skyblock.epk","name":"Skyblock.epk","size":1424163},
-      {"path":"eaglercraft(bow2awp).zip","name":"eaglercraft(bow2awp).zip","size":642085},
-      {"path":"prism-cottoncandy.zip","name":"prism-cottoncandy.zip","size":14913546},
-      {"path":"small-hands.zip","name":"small-hands.zip","size":19220},
-      {"path":"texture-pack.zip","name":"texture-pack.zip","size":2361485},
-      {"path":"watchtower.epk","name":"watchtower.epk","size":4582403}
-    ];
+      const btn = document.getElementById('downloadButton');
+      const status = document.getElementById('status');
+      const progWrap = document.querySelector('.progress');
+      const progBar = document.getElementById('progressBar');
 
-    function formatBytes(bytes){
-      if (bytes === 0) return '0 B';
-      const units = ['B','KB','MB','GB','TB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(1024));
-      return parseFloat((bytes / Math.pow(1024, i)).toFixed(i ? 2 : 0)) + ' ' + units[i];
-    }
+      function setStatus(text) { status.textContent = text; }
+      function setProgress(pct) { progWrap.style.display = ''; progBar.style.width = pct + '%'; }
 
-    // Build raw URL safely by percent-encoding each path segment
-    function rawUrlFor(path) {
-      return RAW_BASE + path.split('/').map(encodeURIComponent).join('/');
-    }
+      async function saveBlob(blob, filename = 'eag.zip') {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
 
-    const tbody = document.querySelector('#filesTable tbody');
+      async function downloadViaFetch() {
+        setStatus('Starting download...');
+        try {
+          const response = await fetch(apiUrl);
+          if (!response.ok) throw new Error('Network response not OK: ' + response.status);
 
-    files.forEach((f, idx) => {
-      const tr = document.createElement('tr');
+          // If streaming not supported, fall back to blob() call
+          const contentLength = response.headers.get('content-length');
+          if (!response.body || !response.body.getReader) {
+            setStatus('Saving file...');
+            const blob = await response.blob();
+            await saveBlob(blob);
+            setStatus('Download complete.');
+            return;
+          }
 
-      // checkbox cell
-      const cbTd = document.createElement('td');
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.dataset.index = idx;
-      cbTd.appendChild(cb);
-      tr.appendChild(cbTd);
+          const total = contentLength ? parseInt(contentLength, 10) : null;
+          const reader = response.body.getReader();
+          let received = 0;
+          const chunks = [];
+          while (true) {
+            const {done, value} = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            received += value.byteLength || value.length;
+            if (total) {
+              setProgress(Math.floor((received / total) * 100));
+              setStatus(`Downloading — ${Math.floor((received / total) * 100)}%`);
+            } else {
+              // show an indeterminate pseudo-progress
+              setStatus(`Downloading — ${(Math.round(received/1024/1024*100)/100)} MB received`);
+            }
+          }
+          const blob = new Blob(chunks, { type: 'application/zip' });
+          setStatus('Finalizing file...');
+          await saveBlob(blob, 'eag.zip');
+          setStatus('Download complete.');
+        } catch (err) {
+          console.error(err);
+          throw err;
+        }
+      }
 
-      // filename cell
-      const nameTd = document.createElement('td');
-      // show plain text to preserve special characters
-      nameTd.textContent = f.name;
-      tr.appendChild(nameTd);
-
-      // size cell
-      const sizeTd = document.createElement('td');
-      sizeTd.textContent = formatBytes(f.size);
-      tr.appendChild(sizeTd);
-
-      // action cell with download button and raw link
-      const actionTd = document.createElement('td');
-      const link = document.createElement('a');
-      link.href = rawUrlFor(f.path);
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.className = 'download-link';
-      link.textContent = 'Open raw';
-      actionTd.appendChild(link);
-
-      actionTd.appendChild(document.createTextNode(' '));
-
-      const btn = document.createElement('button');
-      btn.textContent = 'Download';
-      btn.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        triggerDownload(rawUrlFor(f.path), f.name);
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        progWrap.style.display = 'none';
+        progBar.style.width = '0%';
+        setStatus('');
+        try {
+          // Try to fetch via GitHub API and stream to a blob (so we can name it eag.zip)
+          await downloadViaFetch();
+        } catch (err) {
+          // If fetch or CORS prevented it, fall back to navigating to GitHub's archive (user can manually save)
+          setStatus('Automatic download blocked. Redirecting to GitHub archive...');
+          // small timeout so the user sees the status
+          setTimeout(() => {
+            window.location.href = fallbackUrl;
+          }, 800);
+        } finally {
+          btn.disabled = false;
+        }
       });
-      actionTd.appendChild(btn);
-
-      tr.appendChild(actionTd);
-
-      tbody.appendChild(tr);
-    });
-
-    // Trigger a download by creating an anchor and clicking it.
-    function triggerDownload(url, filename) {
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename || '';
-      // Some browsers require the anchor to be in the document
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-
-    // Download selected functionality
-    document.getElementById('downloadSelectedBtn').addEventListener('click', () => {
-      const checked = Array.from(document.querySelectorAll('input[type=checkbox]:checked'));
-      if (checked.length === 0) {
-        alert('No files selected.');
-        return;
-      }
-      // Download sequentially to reduce browser blocking; a small delay between clicks
-      let i = 0;
-      function next() {
-        if (i >= checked.length) return;
-        const idx = parseInt(checked[i].dataset.index, 10);
-        const f = files[idx];
-        triggerDownload(rawUrlFor(f.path), f.name);
-        i++;
-        // slight delay to avoid downloads being blocked; adjust as needed
-        setTimeout(next, 400);
-      }
-      next();
-    });
-
-    // Select all / clear buttons
-    document.getElementById('selectAllBtn').addEventListener('click', () => {
-      document.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = true);
-    });
-    document.getElementById('clearAllBtn').addEventListener('click', () => {
-      document.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
-    });
+    })();
   </script>
 </body>
 </html>
